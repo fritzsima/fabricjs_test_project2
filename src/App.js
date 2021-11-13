@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import CanvasManager from "./CanvasManager";
 import { CANVAS_CONFIG } from './Constants';
 
@@ -7,7 +7,7 @@ function App() {
 
   useEffect(() => {
     canvasManager = new CanvasManager(CANVAS_CONFIG.ID);
-  }, []);
+  });
 
   const undo = () => {
     console.log("undo");

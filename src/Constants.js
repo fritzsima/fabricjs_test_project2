@@ -4,9 +4,9 @@ export const CANVAS_CONFIG = {
 
 export const SHAPE_CONFIG = {
     size: 200,
-    numVerts: 4,
+    numVerts: 3,
     cornerR: 0,
-    maxNumVerts: 15
+    maxNumVerts: 21
 };
 
 export const CANVAS_OPTIONS = {

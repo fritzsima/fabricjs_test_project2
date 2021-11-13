@@ -1,78 +1,112 @@
+import { fabric } from "fabric";
+
 export class Command {
     constructor(canvas) {
         this.canvas = canvas;
-        this.currentState = canvas.toJSON(['numVerts', 'cornerR']);
-        this.locked = false;
-        this.stack0 = canvas.toJSON(['numVerts', 'cornerR']);
-        this.redoStack = [this.stack0];
-        this.stateStack = [this.stack0];
-        this.initHandlers(this.canvas);
-    }
+        this.list = [];
+        this.state = [];
+        this.index1 = 0;
+        this.index2 = 0;
+        this.action = false;
+        this.refresh = true;
+        this.extras = ["numVerts", "cornerR"]
 
-    initHandlers = (canvas) => {
-        this.canvas.on("object:modified", (e) => {
-            this.saveState();
+        canvas.on("object:added", (e) => {
+            var object = e.target;
+            console.log('object:modified');
+
+            if (this.action === true) {
+                this.state = [this.state[this.index2]];
+                this.list = [this.list[this.index2]];
+
+                this.action = false;
+                console.log(this.state);
+                this.index1 = 1;
+            }
+            object.saveState();
+
+            console.log(object.originalState);
+            this.extras.forEach((extra) => {
+                object.originalState[extra] = object[extra];
+            });
+            this.state[this.index1] = JSON.stringify(object.originalState);
+            this.list[this.index1] = object;
+            this.index1++;
+            this.index2 = this.index1 - 1;
+
+            this.refresh = true;
         });
 
-        this.canvas.on('path:created', (e) => {
-            this.saveState();
-        });
+        canvas.on("object:modified", (e) => {
+            var object = e.target;
+            console.log('object:modified');
 
-        this.canvas.on('object:added', (e) => {
-            this.saveState();
-        });
+            if (this.action === true) {
+                this.state = [this.state[this.index2]];
+                this.list = [this.list[this.index2]];
 
-        this.canvas.on('selection:updated', () => {
-            this.saveState();
-        });
-
-        this.canvas.on('selection:created', () => {
-            this.saveState();
-        });
-
-        this.canvas.on('selection:cleared', () => {
-            this.saveState();
-        });
-    }
-
-    saveState = () => {
-        if (!this.locked) {
-            if (this.stateStack.length === this.maxCount) {
-                this.stateStack.shift();
+                this.action = false;
+                console.log(this.state);
+                this.index1 = 1;
             }
 
-            this.stateStack.push(this.currentState);
-            this.currentState = this.canvas.toJSON(['numVerts', 'cornerR']);
-            this.redoStack = [];
+            console.log(object);
+            object.saveState();
+
+            this.extras.forEach((extra) => {
+                object.originalState[extra] = object[extra];
+            });
+            this.state[this.index1] = JSON.stringify(object.originalState);
+            this.list[this.index1] = object;
+            this.index1++;
+            this.index2 = this.index1 - 1;
+
+            console.log(this.state);
+            this.refresh = true;
+        });
+
+    }
+
+    undo = () => {
+
+        if (this.index1 <= 0) {
+            this.index1 = 0;
+            return;
         }
-        return {
-            undoable: this.stateStack.length > 1, 
-            redoable: this.redoStack.length > 1
-        };
+
+        if (this.refresh === true) {
+            this.index1--;
+            this.refresh = false;
+        }
+
+        console.log('undo');
+
+        this.index2 = this.index1 - 1;
+        this.current = this.list[this.index2];
+
+        this.current.setOptions(JSON.parse(this.state[this.index2]));
+
+        this.index1--;
+        this.current.setCoords();
+        this.canvas.renderAll();
+        this.action = true;
     }
 
-    undo = (callback) => {
-        if (this.stateStack.length > 1)
-            this.applyState(this.redoStack, this.stateStack.pop(), callback);
-    }
+    redo = () => {
 
-    redo = (callback) => {
-        if (this.redoStack.length > 0) 
-            this.applyState(this.stateStack, this.redoStack.pop(), callback);
-    }
+        this.action = true;
+        if (this.index1 >= this.state.length - 1) {
+            return;
+        }
 
-    applyState = (stack, newState, callBack) => {
-        stack.push(this.currentState);
-        this.currentState = newState;
-        this.locked = true;
+        console.log('redo');
 
-        this.canvas.loadFromJSON(this.currentState, () => {
-            if (callBack !== undefined)
-                callBack({
-                    undoable: this.stateStack.length > 1, 
-                    redoable: this.redoStack.length > 1
-                });
-            this.locked = false;
-        });       
+        this.index2 = this.index1 + 1;
+        this.current = this.list[this.index2];
+        this.current.setOptions(JSON.parse(this.state[this.index2]));
+
+        this.index1++;
+        this.current.setCoords();
+        this.canvas.renderAll();
     }
 }

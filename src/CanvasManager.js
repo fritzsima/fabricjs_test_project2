@@ -1,10 +1,12 @@
 import { fabric } from "fabric";
+import react from "react";
 import { Command } from "./Command";
 import {
     CANVAS_OPTIONS,
     RECT_OPTIONS,
     SHAPE_CONFIG
 } from './Constants'
+import './Extension'
 
 const controlTypes = [
     "tl",
@@ -15,30 +17,19 @@ const controlTypes = [
     "pr"
 ];
 
-fabric.Object.prototype.transparentCorners = false
-fabric.Object.prototype.borderColor = "lightGreen"
-fabric.Object.prototype.cornerColor = "lightGreen"
-fabric.Object.prototype.cornerStyle = "circle"
-
 export default class CanvasManager {
     constructor(id) {
         this.canvas = this.createCanvas(id, CANVAS_OPTIONS);
-        this.addRect(this.canvas, RECT_OPTIONS);
         this.command = new Command(this.canvas);
+        this.addRect(this.canvas, RECT_OPTIONS);
     }
 
     undo = () => {
-        this.command.undo((e) => {
-            this.canvas._objects[0].controls = this.createControls();
-            this.canvas.renderAll();
-        });
+        this.command.undo();
     }
 
     redo = () => {
-        this.command.redo((e) => {
-            this.canvas._objects[0].controls = this.createControls();
-            this.canvas.renderAll();
-        });
+        this.command.redo();
     }
 
     createCanvas = (id, options) => {
@@ -46,17 +37,26 @@ export default class CanvasManager {
     }
 
     addRect = (canvas, options) => {
-        const trianglePath = this.getRoundSVGPath(SHAPE_CONFIG.numVerts, SHAPE_CONFIG.cornerR);
-        const triangle = new fabric.Path(trianglePath, {
-            ...options,
+        const rectPath = this.getRoundSVGPath(SHAPE_CONFIG.numVerts, SHAPE_CONFIG.cornerR);
+        const rect = new fabric.Path(rectPath, {
             hasControls: true,
             strokeUniform: true,
             numVerts: SHAPE_CONFIG.numVerts,
             cornerR: SHAPE_CONFIG.cornerR,
-        })
-        triangle.controls = this.createControls();
-        canvas.add(triangle);
-        return triangle
+        });
+        rect.set({
+            ...options,
+            width: SHAPE_CONFIG.size,
+            height: SHAPE_CONFIG.size,
+            pathOffset: {
+                x: 0,
+                y: 0
+            },
+        });
+        rect.controls = this.createControls();
+        rect.setupState();
+        canvas.add(rect);
+        return rect
     }
 
     createControls = () => (
@@ -161,7 +161,6 @@ export default class CanvasManager {
                         path: pathObject.path,
                         cornerR: cornerR
                     });
-                    fabricObject.setCoords();
                 }
                 break;
             case "pr":
@@ -188,7 +187,6 @@ export default class CanvasManager {
                         path: pathObject.path,
                         numVerts: numVerts
                     });
-                    fabricObject.setCoords();
                 }
         }
         return true;
