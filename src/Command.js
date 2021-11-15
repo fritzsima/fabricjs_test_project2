@@ -11,7 +11,11 @@ export class Command {
         this.refresh = true;
         this.extras = ["numVerts", "cornerR"]
 
-        canvas.on("object:added", (e) => {
+        this.handleEvents();
+    }
+
+    handleEvents = () => {
+        this.canvas.on("object:added", (e) => {
             var object = e.target;
 
             if (this.action === true) {
@@ -34,7 +38,7 @@ export class Command {
             this.refresh = true;
         });
 
-        canvas.on("object:modified", (e) => {
+        this.canvas.on("object:modified", (e) => {
             var object = e.target;
 
             if (this.action === true) {
@@ -57,7 +61,6 @@ export class Command {
 
             this.refresh = true;
         });
-
     }
 
     undo = () => {
