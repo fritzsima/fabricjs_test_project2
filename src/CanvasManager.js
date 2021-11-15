@@ -194,42 +194,29 @@ export default class CanvasManager {
 
     getRoundSVGPath = (numVerts, cornerR) => {
         let verts = [];
+        let segments = [];
         const step = Math.PI * 2 / numVerts;
         for (let i = 0; i < numVerts; i++) {
             const r = SHAPE_CONFIG.size / 2;
-            const x = r * Math.cos(step * i - Math.PI / 2);
-            const y = r * Math.sin(step * i - Math.PI / 2);
-            verts.push({ x, y });
-        }
+            const al = step * i - Math.PI / 2;
+            const x = r * Math.cos(al);
+            const y = r * Math.sin(al);
 
-        verts = verts.slice();
+            const al1 = al + (Math.PI - step) / 2;
+            const al2 = al - (Math.PI - step) / 2;
+            const rn = cornerR * Math.cos((Math.PI - step) / 2);
+            const rc = cornerR * Math.sin((Math.PI - step) / 2);
 
-        const segments = [];
-        for (let i = 0; i < numVerts; i++) {
-            const t1 = verts[i];
-            const t2 = verts[(i + 1) % numVerts];
-            const t3 = verts[(i + 2) % numVerts];
-
-            const d12 = Math.sqrt(Math.pow(t1.x - t2.x, 2) + Math.pow(t1.y - t2.y, 2));
-            const r12 = (d12 - cornerR) / d12;
-            const cp12 = [
-                ((1 - r12) * t1.x + r12 * t2.x).toFixed(1),
-                ((1 - r12) * t1.y + r12 * t2.y).toFixed(1)
-            ]
-
-            const d23 = Math.sqrt(Math.pow(t2.x - t3.x, 2) + Math.pow(t2.y - t3.y, 2));
-            const r23 = cornerR / d23;
-            const cp23 = [
-                ((1 - r23) * t2.x + r23 * t3.x).toFixed(1),
-                ((1 - r23) * t2.y + r23 * t3.y).toFixed(1)
-            ];
+            // const pc = [x - rn * cos(al), x - rn * sin(al)];
+            const p1 = [x - rn * Math.cos(al1), y - rn * Math.sin(al1)];
+            const p2 = [x - rn * Math.cos(al2), y - rn * Math.sin(al2)];
 
             if (i === numVerts - 1) {
-                segments.unshift("M" + cp23.join(","));
+                segments.unshift(`M${p2[0]},${p2[1]}`);
             }
 
-            segments.push("L" + cp12.join(","));
-            segments.push("Q" + t2.x + "," + t2.y + "," + cp23.join(","));
+            segments.push(`L${p1[0]},${p1[1]}`);
+            segments.push(`A ${rc} ${rc} ${Math.PI / 2} 0 1 ${p2[0]} ${p2[1]}`);
         }
         segments.push("Z");
 
