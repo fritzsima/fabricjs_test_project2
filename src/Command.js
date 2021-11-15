@@ -13,19 +13,16 @@ export class Command {
 
         canvas.on("object:added", (e) => {
             var object = e.target;
-            console.log('object:modified');
 
             if (this.action === true) {
                 this.state = [this.state[this.index2]];
                 this.list = [this.list[this.index2]];
 
                 this.action = false;
-                console.log(this.state);
                 this.index1 = 1;
             }
             object.saveState();
 
-            console.log(object.originalState);
             this.extras.forEach((extra) => {
                 object.originalState[extra] = object[extra];
             });
@@ -39,18 +36,15 @@ export class Command {
 
         canvas.on("object:modified", (e) => {
             var object = e.target;
-            console.log('object:modified');
 
             if (this.action === true) {
                 this.state = [this.state[this.index2]];
                 this.list = [this.list[this.index2]];
 
                 this.action = false;
-                console.log(this.state);
                 this.index1 = 1;
             }
 
-            console.log(object);
             object.saveState();
 
             this.extras.forEach((extra) => {
@@ -61,25 +55,24 @@ export class Command {
             this.index1++;
             this.index2 = this.index1 - 1;
 
-            console.log(this.state);
             this.refresh = true;
         });
 
     }
 
     undo = () => {
-
         if (this.index1 <= 0) {
             this.index1 = 0;
             return;
         }
 
         if (this.refresh === true) {
+            if (this.index1 <= 1) {
+                return;
+            }
             this.index1--;
             this.refresh = false;
         }
-
-        console.log('undo');
 
         this.index2 = this.index1 - 1;
         this.current = this.list[this.index2];
@@ -93,13 +86,10 @@ export class Command {
     }
 
     redo = () => {
-
         this.action = true;
         if (this.index1 >= this.state.length - 1) {
             return;
         }
-
-        console.log('redo');
 
         this.index2 = this.index1 + 1;
         this.current = this.list[this.index2];
